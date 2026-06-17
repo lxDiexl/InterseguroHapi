@@ -1,0 +1,245 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Interseguro Matrix API",
+    "description": "API REST para análisis de matrices con factorización QR",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Interseguro",
+      "email": "dev@interseguro.pe"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Servidor de desarrollo"
+    },
+    {
+      "url": "https://api.interseguro.pe",
+      "description": "Servidor de producción"
+    }
+  ],
+  "tags": [
+    {
+      "name": "matrix",
+      "description": "Operaciones de análisis de matrices"
+    },
+    {
+      "name": "health",
+      "description": "Health checks del servicio"
+    }
+  ],
+  "paths": {
+    "/api/analyze": {
+      "post": {
+        "tags": ["matrix"],
+        "summary": "Analizar matrices Q y R",
+        "description": "Recibe matrices Q y R generadas por factorización QR, calcula estadísticas y verifica si son diagonales",
+        "operationId": "analyzeMatrix",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatrixRequest"
+              },
+              "example": {
+                "rotated": [[1, 2], [3, 4]],
+                "Q": [[1, 0], [0, 1]],
+                "R": [[2, 0], [0, 3]]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Análisis completado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatrixResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos de entrada inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "tags": ["health"],
+        "summary": "Health check del servicio",
+        "description": "Verifica que el servicio esté funcionando correctamente",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "Servicio funcionando correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "MatrixRequest": {
+        "type": "object",
+        "required": ["rotated", "Q", "R"],
+        "properties": {
+          "rotated": {
+            "type": "array",
+            "description": "Matriz rotada",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          "Q": {
+            "type": "array",
+            "description": "Matriz Q de la factorización",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          "R": {
+            "type": "array",
+            "description": "Matriz R de la factorización",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
+      "MatrixResponse": {
+        "type": "object",
+        "properties": {
+          "RotatedMatrix": {
+            "type": "array",
+            "description": "Matriz rotada",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          "QMatrix": {
+            "type": "array",
+            "description": "Matriz Q",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          "RMatrix": {
+            "type": "array",
+            "description": "Matriz R",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          "QStats": {
+            "$ref": "#/components/schemas/MatrixStats"
+          },
+          "RStats": {
+            "$ref": "#/components/schemas/MatrixStats"
+          }
+        }
+      },
+      "MatrixStats": {
+        "type": "object",
+        "properties": {
+          "average": {
+            "type": "number",
+            "description": "Promedio de todos los elementos"
+          },
+          "isDiagonal": {
+            "type": "boolean",
+            "description": "Indica si la matriz es diagonal"
+          },
+          "max": {
+            "type": "number",
+            "description": "Valor máximo en la matriz"
+          },
+          "min": {
+            "type": "number",
+            "description": "Valor mínimo en la matriz"
+          },
+          "sum": {
+            "type": "number",
+            "description": "Suma de todos los elementos"
+          }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "OK"
+          },
+          "service": {
+            "type": "string",
+            "example": "interseguro-matrix-api"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Mensaje de error"
+          },
+          "transactionId": {
+            "type": "string",
+            "description": "ID de transacción para trazabilidad"
+          }
+        }
+      }
+    }
+  }
+}

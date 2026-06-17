@@ -1,20 +1,28 @@
-# Usamos la imagen oficial de Node.js 20.11.1 como base
-FROM node:20.11.1-alpine
+# Etapa 1: Build
+FROM node:20.11.1-alpine AS builder
 
-# Establecemos el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Copiamos los archivos de configuración del proyecto al contenedor
 COPY package*.json ./
+RUN npm ci --only=production
 
-# Instalamos las dependencias del proyecto
-RUN npm install
+COPY tsconfig.json ./
+COPY src ./src
 
-# Copiamos todo el resto del código fuente al contenedor
-COPY . .
+RUN npm install -D typescript @types/node
+RUN npm run build
 
-# Exponemos el puerto en el que la app escuchará
+# Etapa 2: Production
+FROM node:20.11.1-alpine
+
+WORKDIR /app
+
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package*.json ./
+
+ENV NODE_ENV=production
+
 EXPOSE 3000
 
-# Usamos el comando "npm start" para iniciar la aplicación
 CMD ["npm", "start"]
